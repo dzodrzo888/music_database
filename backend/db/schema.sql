@@ -175,3 +175,25 @@ END;
 //
 
 DELIMITER ;
+
+-- Views creation
+
+CREATE VIEW `non_deleted_users` AS
+SELECT * FROM `Users`
+WHERE deleted = 0;
+
+CREATE VIEW `non_deleted_artists` AS 
+SELECT * FROM `Artists`
+WHERE deleted = 0;
+
+CREATE VIEW `non_deleted_albums` AS 
+SELECT * FROM `Albums`
+WHERE deleted = 0;
+
+CREATE VIEW `non_deleted_song` AS
+SELECT * FROM `Songs`
+WHERE deleted = 0;
+
+CREATE VIEW `non_deleted_playlists` AS
+SELECT * FROM `Playlists`
+WHERE deleted = 0;
