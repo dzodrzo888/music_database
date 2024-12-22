@@ -7,6 +7,11 @@ DROP TABLE IF EXISTS `Songs`;
 DROP TABLE IF EXISTS `Albums`;
 DROP TABLE IF EXISTS `Artists`;
 DROP TABLE IF EXISTS `Users`;
+DROP VIEW IF EXISTS `non_deleted_users`;
+DROP VIEW IF EXISTS `non_deleted_artists`;
+DROP VIEW IF EXISTS `non_deleted_albums`;
+DROP VIEW IF EXISTS `non_deleted_songs`;
+DROP VIEW IF EXISTS `non_deleted_playlists`;
 -- USERS
 -- table mapping users.
 CREATE TABLE `Users`(
@@ -176,6 +181,10 @@ END;
 
 DELIMITER ;
 
+-- Attempt to add the column
+ALTER TABLE Playlists
+ADD date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
 -- Views creation
 
 CREATE VIEW `non_deleted_users` AS
@@ -190,7 +199,7 @@ CREATE VIEW `non_deleted_albums` AS
 SELECT * FROM `Albums`
 WHERE deleted = 0;
 
-CREATE VIEW `non_deleted_song` AS
+CREATE VIEW `non_deleted_songs` AS
 SELECT * FROM `Songs`
 WHERE deleted = 0;
 
