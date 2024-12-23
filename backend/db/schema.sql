@@ -112,11 +112,11 @@ CREATE TABLE `Likes` (
 );
 
 CREATE TABLE `Playlists_users` (
+    playlists_id INT NOT NULL,
     user_id INT NOT NULL,
-    playlist_id INT NOT NULL,
-    PRIMARY KEY (user_id, playlist_id),
+    PRIMARY KEY (playlists_id, user_id),
     FOREIGN KEY (user_id) REFERENCES Users(id),
-    FOREIGN KEY (playlist_id) REFERENCES Playlists(id)
+    FOREIGN KEY (playlists_id) REFERENCES Playlists(id)
 );
 
 -- Trigger creation

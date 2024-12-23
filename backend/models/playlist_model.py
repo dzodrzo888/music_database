@@ -124,7 +124,6 @@ class Playlist_model:
             columns_table = [row["Field"] for row in self.table_columns]
             columns_dict = [col for col in playlist_info.keys()]
             excluded_cols = ["id", "deleted"]
-
             # Check if the table columns match the input columns
             self.check_if_input_cols_match(table_columns=columns_table, input_columns=columns_dict, exclude_columns=excluded_cols)
 
@@ -143,50 +142,56 @@ class Playlist_model:
             logger.error(f"Error when createing a new song {err}")
             raise DatabaseConnectionError(f"Database connection failed {err}.")
 
-    def add_songs_to_playlist(self, song_id: str, playlist_id: str):
+    def add_to_playlist(self, id: str, playlist_id: str, type: str):
         """
         Adds songs to a playlist.
 
         Args:
-            song_id (string): Songs id.
+            id (string): Either song or user id.
             Playlist_id (string): Playlist id.
+            type (string): Type of a column being inserted
         Raises:
             ValueError: If song_id or playlist_id is not a string
             DatabaseConnectionError: If database error occurs during the database creation
         """
         try:
-            song_id = self.string_checker(song_id)
-            playlist_id = self.string_checker(playlist_id)
-            query = """
-                    INSERT INTO Playlist_tracks(playlist_id, song_id)
+            table = "Playlist_tracks"
+            if type != "song":
+                table = "Playlists_users"
+            type = self.string_checker(type)
+            query = f"""
+                    INSERT INTO {table}(playlists_id, {type}_id)
                     VALUES(%s, %s)
                     """
-            self.cursor.execute(query, (playlist_id, song_id))
+            self.cursor.execute(query, (playlist_id, id))
             self.conn.commit()
             logger.info(f"New song added to the playlist {playlist_id}")
         except mysql.connector.Error as err:
             logger.error(f"Databse connection failed {err}")
             raise DatabaseConnectionError(f"Databse connection failed {err}")
     
-    def remove_songs_from_playlist(self, song_id: str, playlist_id: str):
+    def remove_from_playlist(self, id: str, playlist_id: str, type: str):
         """
         Remove songs to a playlist.
 
         Args:
-            song_id (string): Songs id.
+            id (string): Either song or user id.
             Playlist_id (string): Playlist id.
+            type (string): Type of a column being inserted. Either user or song
         Raises:
             ValueError: If song_id or playlist_id is not a string
             DatabaseConnectionError: If database error occurs during the database creation
         """
         try:
-            song_id = self.string_checker(song_id)
-            playlist_id = self.string_checker(playlist_id)
-            query = """
-                    DELETE FROM Playlist_tracks
-                    WHERE playlists_id = %s AND song_id = %s
+            table = "Playlist_tracks"
+            if type != "song":
+                table = "Playlists_users"
+            type = self.string_checker(type)
+            query = f"""
+                    DELETE FROM {table}
+                    WHERE playlists_id = %s AND {type}_id = %s
                     """
-            self.cursor.execute(query, (playlist_id, song_id))
+            self.cursor.execute(query, (playlist_id, id))
             self.conn.commit()
             logger.info(f"Song removed from the playlist {playlist_id}")
         except mysql.connector.Error as err:
@@ -208,19 +213,19 @@ class Playlist_model:
         try:
             user_name = self.string_checker(user_name)
 
-            query = f"""
+            query = """
                     SELECT p.name AS Playlists FROM non_deleted_playlists AS p
                     JOIN Users AS u ON u.id = p.creator_id
-                    WHERE u.name = {user_name}
+                    WHERE u.username = %s
                     """
-            self.cursor.execute(query)
+            self.cursor.execute(query, (user_name, ))
             all_playlists_fetched = self.cursor.fetchall()
 
             if not all_playlists_fetched:
                 logger.warning("No playlists found for user")
                 return []
 
-            all_playlists = [row['name'] for row in all_playlists_fetched]
+            all_playlists = [row['Playlists'] for row in all_playlists_fetched]
             logger.info("All playlists fetched")
             return all_playlists
         
@@ -243,29 +248,26 @@ class Playlist_model:
         try:
             playlist_name = self.string_checker(playlist_name)
 
-            query = f"""
+            query = """
                     SELECT s.name AS Songs FROM non_deleted_songs AS s
                     JOIN Playlist_tracks AS plt ON s.id = plt.song_id
                     JOIN non_deleted_playlists AS pl ON pl.id = plt.playlists_id
-                    WHERE pl.name = {playlist_name}
+                    WHERE pl.name = %s
                     """
-            self.cursor.execute(query)
+            self.cursor.execute(query, (playlist_name, ))
             all_songs_fetched = self.cursor.fetchall()
 
             if not all_songs_fetched:
                 logger.warning("No Songs found in a playlist")
                 return []
 
-            all_songs = [row['name'] for row in all_songs_fetched]
+            all_songs = [row['Songs'] for row in all_songs_fetched]
             logger.info("All songs fetched")
             return all_songs
         
         except mysql.connector.Error as err:
             logger.error(f"Databse connection failed {err}")
             raise DatabaseConnectionError(f"Databse connection failed {err}")
-
-    def share_playlist(self):
-        pass
 
     def update_playlist_details(self, playlist_update_info: dict, playlist_name: str):
         """
@@ -335,3 +337,10 @@ class Playlist_model:
         self.cursor.close()
         self.conn.close()
         logger.info("Database connection closed.")
+
+db_config = {
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME')
+}
