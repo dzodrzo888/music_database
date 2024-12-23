@@ -137,6 +137,28 @@ class User_model:
         except mysql.connector.Error as err:
             logger.error(f"Error updating user {err}.")
             raise
+
+    def fetch_all_users(self):
+        """
+        Fetches all artists from the database.
+
+        Args:
+            ...
+        Returns:
+            all_users (list): Return all the non deleted users from the database.
+        """
+        try:
+            query = """
+                    SELECT * FROM non_deleted_users
+                    """
+            self.cursor.execute(query)
+            all_users_fetched = self.cursor.fetchall()
+            all_users = [i[1] for i in all_users_fetched]
+            logger.info("All artists fetched")
+            return all_users
+        except mysql.connector.Error as err:
+            logger.error(f"Error fetching all artis {err}")
+            raise
     
     def delete_user_account(self, username: str):
         """

@@ -16,8 +16,8 @@ DROP VIEW IF EXISTS `non_deleted_playlists`;
 -- table mapping users.
 CREATE TABLE `Users`(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    password VARCHAR(30) NOT NULL,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
     email VARCHAR(50) NOT NULL,
     date_of_birth DATE NOT NULL,
     deleted TINYINT DEFAULT 0,
@@ -185,6 +185,7 @@ DELIMITER ;
 ALTER TABLE Playlists
 ADD date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
+
 -- Views creation
 
 CREATE VIEW `non_deleted_users` AS
@@ -206,3 +207,4 @@ WHERE deleted = 0;
 CREATE VIEW `non_deleted_playlists` AS
 SELECT * FROM `Playlists`
 WHERE deleted = 0;
+

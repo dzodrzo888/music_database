@@ -1,0 +1,24 @@
+# Ignore the .env file
+senv_files/
+logger/
+
+# Ignore other common files and directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.pot
+*.mo
+*.swp
+*.swo
+*.bak
+*.orig
+*.rej
+*.sublime-project
+*.sublime-workspace
+.idea/
+.vscode/
+.DS_Store
