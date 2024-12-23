@@ -1,5 +1,5 @@
 # Ignore the .env file
-senv_files/
+env_files/
 logger/
 
 # Ignore other common files and directories
