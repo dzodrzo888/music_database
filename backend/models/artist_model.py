@@ -32,7 +32,7 @@ class Artists_model:
 
     def __init__(self, db_config: dict):
         """_
-        Initialize databse connection.
+        Initialize database connection.
 
         Args:
             db_config (dict): Dictionary containing database information
@@ -150,7 +150,7 @@ class Artists_model:
             logger.error(f"Error updating a artist info {err}")
             raise
 
-    def delete_artist(self, artist_name: str):
+    def soft_delete_artist(self, artist_name: str):
         try:
             query = """
                     UPDATE Artists
