@@ -29,31 +29,31 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Connect to the env file and get system variables
-logger.debug(f"Loading .env file from: {env_path}")
+logger.info(f"Loading .env file from: {env_path}")
 load_dotenv(dotenv_path=env_path)
 
-class Albums_model:
+class Song_model:
 
     def __init__(self, db_config: dict):
         """
-        Initialize the Albums_model class with database configuration.
+        Initialize the Song_model class with database configuration.
 
         Args:
             db_config (dict): A dictionary containing database connection details.
 
         Raises:
-                DatabaseConnectionError: If connection to the database fails
+                DatabaseConnectionError: If connection to the database fails.
         """
         try:
             self.conn = mysql.connector.connect(**db_config)
             self.cursor = self.conn.cursor(dictionary=True)
-            self.cursor.execute("SHOW COLUMNS FROM Albums;")
+            self.cursor.execute("SHOW COLUMNS FROM Songs;")
             self.table_columns = self.cursor.fetchall()
             logger.info("Database connection established successfully.")
         except mysql.connector.Error as err:
             logger.error(f"Error connecting to the database: {err}")
             raise DatabaseConnectionError(f"Error connecting to the database: {err}")
-    
+        
     def string_checker(self, string: str):
         """
         Function to check if a input is a string
@@ -108,175 +108,199 @@ class Albums_model:
         if not exact_match and not set([input_columns]).issubset(set(table_columns_filtered)):
             logger.error("Inputed columns that are not in the table schema!")
             raise InputError("Inputed columns that are not in the table schema!") 
-
-    def add_new_album(self, album_info: dict):
+    
+    def add_new_song(self, song_info: str):
         """
-        Inserts a album into the Albums database.
+        Inserts a song into the Songs database.
 
         Args:
-            user_data (dict): A dictionary containing details about the album.
+            song_info (dict): A dictionary containing details about the song.
+            
         Raises:
             InputError: If the set of columns does not equal the columns from the table.
             DatabaseConnectionError: If the database connection fails.
         """
         try:
             columns_table = [row["Field"] for row in self.table_columns]
-            columns_dict = [col for col in album_info.keys()]
+            columns_dict = [col for col in song_info.keys()]
             excluded_cols = ["id", "deleted"]
 
             # Check if the table columns match the input columns
             self.check_if_input_cols_match(table_columns=columns_table, input_columns=columns_dict, exclude_columns=excluded_cols)
 
-            input_columns_string = ", ".join(album_info.keys())
-            placeholders = ", ".join(["%s"] * len(album_info))
+            input_columns_string = ", ".join(song_info.keys())
+            placeholders = ", ".join(["%s"] * len(song_info))
 
             query = f"""
-                        INSERT INTO `Albums`({input_columns_string}) 
+                        INSERT INTO `Songs`({input_columns_string}) 
                         VALUES({placeholders});
                     """
-            album_info_tuple = tuple(album_info.values())
-            self.cursor.execute(query, album_info_tuple)
+            song_info_tuple = tuple(song_info.values())
+            self.cursor.execute(query, song_info_tuple)
             self.conn.commit()
-            logger.info(f"New album added {album_info["name"]}")
+            logger.info(f"New song added {song_info["name"]}")
         except mysql.connector.Error as err:
-            logger.error(f"Error when createing a new album {err}")
+            logger.error(f"Error when createing a new song {err}")
             raise DatabaseConnectionError(f"Database connection failed {err}.")
 
-    def fetch_songs_from_album(self, album_name: str) -> dict:
+    def fetch_song_details(self, song_name:str) -> list:
         """
-        Fetch songs from a specific album.
+        Fetches details about a specific song.
 
         Args:
-            album_name (str): Album_name.
-
+            song_name (str): Song name
         Returns:
-            albums_songs (dict): dict containing the name of the album and all their songs (list).
-        
-        Raises: 
-            DatabaseConnectionError: If connection to the database fails
+            song_details (list): Return details about a specific song.
+                Example = [{'id': 2, 'album_id': 1, 'artist_id': 1, 'name': 'Something', 'release_date': datetime.datetime(1969, 9, 26, 0, 0), 'song_image': None, 'deleted': 0}]
+        Raises:
+            DatabaseConnectionError: If database error occurs during the database creation
         """
-
         try:
-            album_name = self.string_checker(album_name)
-            
-            query = """
-                    SELECT a.name AS album_name, s.name AS song_name FROM non_deleted_albums AS a
-                    JOIN Songs AS s ON a.id = s.album_id
-                    WHERE a.name = %s
+            query = f"""
+                    SELECT * FROM non_deleted_songs
+                    WHERE name = '{song_name}';
                     """
-            self.cursor.execute(query, (album_name, ))
-            albums_songs_fetched = self.cursor.fetchall()
             
-            if not albums_songs_fetched:
-                logger.warning("No album feteched")
-                return {}
-            
-            album_songs = {album_name: [i["song_name"] for i in albums_songs_fetched]}
-            logger.info(f"Songs from {album_name} fetched")
-            return album_songs
-        except mysql.connector.Error as err:
-            logger.error(f"Error fetching songs {err}")
-            raise DatabaseConnectionError(f"Error fetching songs {err}")
+            print(query)
+            self.cursor.execute(query)
+            song_details_fetched = self.cursor.fetchall()
+            if not song_details_fetched:
+                logger.warning("Song not found")
+                return []
 
-    def update_album_information(self, album_update_info: dict, album_name: str):
+            logger.info("Song details fetched")
+            return song_details_fetched
+        except mysql.connector.Error as err:
+            logger.error(f"Databse connection failed {err}")
+            raise DatabaseConnectionError(f"Databse connection failed {err}")
+
+    def fetch_specific_songs(self, column: str, value: str) -> list:
         """
-        Function to update albums info.
+        Fetches specific songs based on a column and a value
 
         Args:
-            album_update_info (dict): dict containing the column and the value that will be changed for a album.
-            album_name (str): Albums name.
+            column (str): column in a table 
+            value (str): value to be looked up in the table
+        Returns:
+            song_details (list): Return details about a specific song.
+        Raises:
+            DatabaseConnectionError: If database error occurs during the database creation
+        """
+        try:
+            query = f"""
+                    SELECT name FROM non_deleted_songs
+                    WHERE {column} = '{value}';
+                    """
+            
+            print(query)
+            self.cursor.execute(query)
+            songs_fetched = self.cursor.fetchall()
+            if not songs_fetched:
+                logger.warning("Song not found")
+                return []
+            specific_songs = [row["name"] for row in songs_fetched]
+            logger.info("Specific songs fetched")
+            return specific_songs
+        except mysql.connector.Error as err:
+            logger.error(f"Databse connection failed {err}")
+            raise DatabaseConnectionError(f"Databse connection failed {err}")
+
+    def fetch_all_songs(self) -> list:
+        """
+        Fetches all songs from the database.
+
+        Args:
+            None
+        Returns:
+            all_songs (list): Return all the non deleted songs from the database.
+        Raises:
+            DatabaseConnectionError: If database error occurs during the database creation
+        """
+        try:
+            query = """
+                    SELECT name FROM non_deleted_songs
+                    """
+            self.cursor.execute(query)
+            all_songs_fetched = self.cursor.fetchall()
+
+            if not all_songs_fetched:
+                logger.warning("No Songs found")
+                return []
+
+            all_songs = [row['name'] for row in all_songs_fetched]
+            logger.info("All songs fetched")
+            return all_songs
+        
+        except mysql.connector.Error as err:
+            logger.error(f"Databse connection failed {err}")
+            raise DatabaseConnectionError(f"Databse connection failed {err}")
+
+    def update_song_details(self, song_update_info: dict, song_name: str):
+        """
+        Function to update songs info.
+
+        Args:
+            song_update_info (dict): dict containing the column and the value that will be changed for a song.
+            song_name (str): Song name.
         
         Raises:
-                InputError: If len of album_update_info info not 1.
-                            if column is not in the albums table
+                InputError: If len of song_update_info info not 1.
+                            if column is not in the songs table
                 DatabaseConnectionError: If connection to the database fails
         """
         try:
             column_table = [row["Field"] for row in self.table_columns]
 
-            column_dict, value = next(iter(album_update_info.items()))
-
+            column_dict, value = next(iter(song_update_info.items()))
             # Check if input is a string
-            album_name = self.string_checker(album_name)
+            song_name = self.string_checker(song_name)
             
-            if  len(album_update_info) != 1:
+            if  len(song_update_info) != 1:
                 logger.error("Dictionary doesnt have just one key-value pair")
                 raise InputError("Dictionary doesnt have just one key-value pair")
 
             self.check_if_input_cols_match(table_columns=column_table, input_columns=column_dict, exact_match=False)
             
             query = f"""
-                    UPDATE Albums
+                    UPDATE Songs
                     SET {column_dict} = %s
                     WHERE name = %s
                     """
-            self.cursor.execute(query, (value, album_name))
+            self.cursor.execute(query, (value, song_name))
             self.conn.commit()
-            logger.info(f"{album_name} info updated on {column_dict} to {value}")
+            logger.info(f"{song_name} info updated on {column_dict} to {value}")
         except mysql.connector.Error as err:
-            logger.error(f"Error updating a album info {err}")
-            raise DatabaseConnectionError(f"Error updating {album_name}. Info: {err}")
+            logger.error(f"Error updating a song info {err}")
+            raise DatabaseConnectionError(f"Error updating a song info {err}")
 
-    def soft_delete_album(self, album_name: str):
+    def soft_delete_songs(self, song_name: str):
         """
-        This function takes a album name as input and marks him as deleted in our database.
+        This function takes a song name as input and marks him as deleted in our database.
 
         Args:
-            album_name (string): Name of a album.
-                Example: "Kansas Anymore"
+            song_name (string): Name of a songs.
+                Example: "Come together"
 
         Raises:
-            ValueError: If album_name is not a string.
+            ValueError: If song_name is not a string.
             DatabaseConnectionError: If database error occurs during the database creation.
         """
         try:
-            album_name = self.string_checker(album_name)
+            song_name = self.string_checker(song_name)
             query = """
-                    UPDATE Albums
+                    UPDATE Songs
                     SET deleted = 1
                     WHERE name = %s
                     """
-            self.cursor.execute(query, (album_name, ))
+            self.cursor.execute(query, (song_name, ))
             self.conn.commit()
-            logger.info(f"{album_name} deleted")
+            logger.info(f"{song_name} deleted")
         except mysql.connector.Error as err:
-            logger.error(f"Error deleting a album {err}")
-            raise DatabaseConnectionError(f"Error deleting a album {err}")
+            logger.error(f"Error deleting a song {err}")
+            raise DatabaseConnectionError(f"Error deleting a song {err}")
 
-    def fetch_all_albums(self) -> list:
-        """
-        Fetches all Albums from the database.
-
-        Args:
-            None
-        Returns:
-            all_albums (list): Return all the non deleted albums from the database.
-        Raises:
-            DatabaseConnectionError: If database error occurs during the database creation
-        """
-        try:
-            query = """
-                    SELECT name FROM non_deleted_albums
-                    """
-            self.cursor.execute(query)
-            all_albums_fetched = self.cursor.fetchall()
-
-            if not all_albums_fetched:
-                logger.warning("No Albums found")
-                return []
-
-            all_albums = [row['name'] for row in all_albums_fetched]
-            logger.info("All Albums fetched")
-            return all_albums
-        
-        except mysql.connector.Error as err:
-            logger.error(f"Databse connection failed {err}")
-            raise DatabaseConnectionError(f"Databse connection failed {err}")
-
-    def close_connection(self):
-        self.cursor.close()
-        self.conn.close()
-        logger.info("Database connection closed.")
+    def fetch_trending_songs(self):
+        pass
 
 db_config = {
     'host': os.getenv('DB_HOST'),
@@ -285,13 +309,4 @@ db_config = {
     'database': os.getenv('DB_NAME')
 }
 
-album = {
-    "artist_id": 7,
-    "name": "Memoir of a Sparklemuffin",
-    "release_date": "2024-06-06",
-    "album_image": None
-}
 
-albums_model = Albums_model(db_config=db_config)
-
-print(albums_model.fetch_all_albums())

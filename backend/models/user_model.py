@@ -1,15 +1,21 @@
+# Define paths
+base_path = Path(__file__).resolve().parent.parent.parent
+env_path = base_path / 'env_files' / 'special_detail.env'
+log_dir = base_path / 'logger'
+log_file = log_dir / 'app.log'
+
 import mysql.connector
 import os
 from dotenv import load_dotenv
 from pathlib import Path
 import logging
 import bcrypt
+import sys
 
-# Define paths
-base_path = Path(__file__).resolve().parent.parent.parent
-env_path = base_path / 'env_files' / 'special_detail.env'
-log_dir = base_path / 'logger'
-log_file = log_dir / 'app.log'
+sys.path.append(str(base_path))
+
+from utils.errors import InputError
+from utils.errors import DatabaseConnectionError
 
 # Setup a logger
 logging.basicConfig(
@@ -34,14 +40,19 @@ class User_model:
 
         Args:
             db_config (dict): A dictionary containing database connection details.
+
+        Raises:
+                DatabaseConnectionError: If connection to the database fails
         """
         try:
             self.conn = mysql.connector.connect(**db_config)
             self.cursor = self.conn.cursor(dictionary=True)
+            self.cursor.execute("SHOW COLUMNS FROM Users;")
+            self.table_columns = self.cursor.fetchall()
             logger.info("Database connection established successfully.")
         except mysql.connector.Error as err:
             logger.error(f"Error connecting to the database: {err}")
-            raise
+            raise DatabaseConnectionError(f"Error connecting to the database: {err}")
 
     def string_checker(self, string: str):
         """
@@ -53,6 +64,10 @@ class User_model:
 
         Raises:
             ValueError: If input is not a string.
+                        If string is with whitespaces.
+        Returns:
+            string_stripped (str): Returns a string striped
+                        Example: "a"            
         """
 
 
@@ -61,18 +76,24 @@ class User_model:
             raise ValueError("Input must be a non-empty string.")
 
         if not string.strip():
-            logger.error("Input must be a non empty string")
+            logger.info("Input must be a non empty string")
+            raise ValueError("Input must be a non empty string")
+        
+        string_stripped = string.strip()
 
-    def check_if_input_cols_match(self, table_columns: list, input_columns: list, exclude_columns = None):
+        return string_stripped
+
+    def check_if_input_cols_match(self, table_columns: list, input_columns: list, exclude_columns = None, exact_match=True):
         """
-        Checks if columns that want to be inputed match the table columns raises a ValueError if not.
+        Checks if columns that want to be inputed match the table columns raises a InputError if not.
 
         Args:
             table_columns (list): List of columns from a sql table,
             input_columns (list): List of columns that want to be inputed.
 
         Raises:
-            ValueError: If the columns dont match.
+            InputError: If the columns dont match and we need a exact match.
+                        If the column does not match any other columns from the table.
         """
 
         if not exclude_columns:
@@ -80,9 +101,13 @@ class User_model:
 
         table_columns_filtered = [col for col in table_columns if col not in exclude_columns]
 
-        if set(input_columns) != set(table_columns_filtered):
-                logger.error(f"Inputed columns dont match the table columns")
-                raise ValueError ("Inputed columns dont match the table columns")
+        if set(input_columns) != set(table_columns_filtered) and exact_match:
+            logger.error("Inputed columns dont match the table columns")
+            raise InputError("Inputed columns dont match the table columns")
+        
+        if not exact_match and not set([input_columns]).issubset(set(table_columns_filtered)):
+            logger.error("Inputed columns that are not in the table schema!")
+            raise InputError("Inputed columns that are not in the table schema!") 
         
     def hash_passwords(self, password: str) -> str:
         """
@@ -95,7 +120,7 @@ class User_model:
             str: Hashed password
         """
         # Checks if input is a non empty space string
-        self.string_checker(password)
+        password = self.string_checker(password)
 
         return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     
@@ -109,10 +134,10 @@ class User_model:
             bool: True if the password matches, False otherwise.
         """
         # Checks if input is a non empty space string
-        self.string_checker(plain_password)
+        plain_password = self.string_checker(plain_password)
 
         # Checks if input is a non empty space string
-        self.string_checker(hashed_password)
+        hashed_password = self.string_checker(hashed_password)
 
         return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
@@ -123,21 +148,23 @@ class User_model:
         Args:
             user_data (dict): A dictionary containing details about the user.
         Raises:
-            ValueError: If the set of columns does not equal the columns from the table.
-            RuntimeError: If the database connection fails.
+            InputError: If the set of columns does not equal the columns from the table.
+            DatabaseConnectionError: If the database connection fails.
         """
         try:
-            self.cursor.execute("SHOW COLUMNS FROM Users;")
-            columns_table = [row["Field"] for row in self.cursor.fetchall()]
+            columns_table = [row["Field"] for row in self.table_columns]
             columns_dict = [col for col in user_data.keys()]
             excluded_cols = ["id", "deleted"]
 
             # Check if the table columns match the input columns
             self.check_if_input_cols_match(table_columns=columns_table, input_columns=columns_dict, exclude_columns=excluded_cols)
 
-            query = """
-                        INSERT INTO `Users`(username, password, email, date_of_birth, profile_image) 
-                        VALUES(%s, %s, %s, %s, %s)
+            input_columns_string = ", ".join(user_data.keys())
+            placeholders = ", ".join(["%s"] * len(user_data))
+
+            query = f"""
+                        INSERT INTO `Users`({input_columns_string}) 
+                        VALUES({placeholders});
                     """
             user_data["password"] = self.hash_passwords(user_data["password"])
             user_data_tuple = tuple(user_data.values())
@@ -146,7 +173,7 @@ class User_model:
             logger.info(f"User sucessfully registered!")
         except mysql.connector.Error as err:
             logger.error(f"Database connection failed {err}.")
-            raise RuntimeError(f"Database connection failed {err}.")
+            raise DatabaseConnectionError(f"Database connection failed {err}.")
 
     def authenticate_user(self, user_dict: dict) -> bool:
         """
@@ -155,10 +182,10 @@ class User_model:
             user_dict (dict): Contains users username and his password
         Returns:
             bool: True if the password for the user matches, False otherwise.
-        Raises: ValueError: If user_dict is has more than two key-value pairs.
+        Raises: InputError: If user_dict is has more than two key-value pairs.
                             If in the dict you have different columns than username and password.
                             If the password or username is empty.
-                RuntimeError: If connection to the database fails.
+                DatabaseConnectionError: If connection to the database fails.
         """      
         try:
             ALLOWED_COLUMNS = ["username", "password"]
@@ -170,11 +197,11 @@ class User_model:
             
             if any(not value for value in values):
                 logger.error("Username or password cannot be empty.")
-                raise ValueError("Username or password cannot be empty.")
+                raise InputError("Username or password cannot be empty.")
 
             query = """
                     SELECT password FROM Users
-                    WHERE username = %s
+                    WHERE username = %s;
                     """
             self.cursor.execute(query, (user_dict["username"], ))
             result = self.cursor.fetchone()
@@ -193,7 +220,7 @@ class User_model:
             return checked_password
         except mysql.connector.Error as err:
             logger.error(f"Database connection failed {err}.")
-            raise RuntimeError(f"Database connection failed {err}")
+            raise DatabaseConnectionError(f"Database connection failed {err}")
     
     def update_user_details(self, updated_info: dict, username: str):
         """
@@ -205,26 +232,23 @@ class User_model:
             username (string): Name of the user being updated.
                 Example: "my_name"
         Raises:
-            ValueError: If dict has more than one key-value pair.
+            InputError: If dict has more than one key-value pair.
                         If a column passed in the dict is not in the table.
-            RuntimeError: If database connection error occurs.
+            DatabaseConnectionError: If database connection error occurs.
         """
         try:
-            self.cursor.execute("SHOW COLUMNS FROM Users;")
-            column_table = [row["Field"] for row in self.cursor.fetchall()]
+            column_table = [row["Field"] for row in self.table_columns]
 
             column_dict, value = next(iter(updated_info.items()))
 
             # Check if input is a string
-            self.string_checker(username)
+            username = self.string_checker(username)
             
             if  len(updated_info) != 1:
                 logger.error("Dictionary doesnt have just one key-value pair")
-                raise ValueError("Dictionary doesnt have just one key-value pair")
+                raise InputError("Dictionary doesnt have just one key-value pair")
 
-            if column_dict not in column_table:
-                logger.error(f"{column_dict} is not in table columns")
-                raise ValueError(f"{column_dict} is not in table columns")
+            self.check_if_input_cols_match(table_columns=column_table, input_columns=column_dict, exact_match=False)
 
             if column_dict == "password":
                 value = self.hash_passwords(value)
@@ -232,7 +256,7 @@ class User_model:
             query = f"""
                     UPDATE `Users`
                     SET {column_dict} = %s
-                    WHERE username = %s
+                    WHERE username = %s;
                     """
             self.cursor.execute(query, (value, username))
             self.conn.commit()
@@ -240,9 +264,9 @@ class User_model:
 
         except mysql.connector.Error as err:
             logger.error(f"Database connection failed {err}.")
-            raise RuntimeError(f"Database connection failed {err}.")
+            raise DatabaseConnectionError(f"Database connection failed {err}.")
 
-    def fetch_all_users(self):
+    def fetch_all_users(self) -> list:
         """
         Fetches all artists from the database.
 
@@ -251,11 +275,11 @@ class User_model:
         Returns:
             all_users (list): Return all the non deleted users from the database. Returns a empty list if no users are found.
         Raises:
-            RuntimeError: If database error occurs during the database creation
+            DatabaseConnectionError: If database error occurs during the database creation
         """
         try:
             query = """
-                    SELECT * FROM non_deleted_users
+                    SELECT username FROM non_deleted_users;
                     """
             self.cursor.execute(query)
             all_users_fetched = self.cursor.fetchall()
@@ -265,12 +289,12 @@ class User_model:
                 return []
 
             all_users = [row['username'] for row in all_users_fetched]
-            logger.info("All artists fetched")
+            logger.info("All users fetched")
             return all_users
         
         except mysql.connector.Error as err:
             logger.error(f"Databse connection failed {err}")
-            raise RuntimeError(f"Databse connection failed {err}")
+            raise DatabaseConnectionError(f"Databse connection failed {err}")
     
     def delete_user_account(self, username: str):
         """
@@ -282,17 +306,17 @@ class User_model:
 
         Raises:
             ValueError: If username is not a string.
-            RuntimeError: If database error occurs during the database creation.
+            DatabaseConnectionError: If database error occurs during the database creation.
         """
 
         try:
             # Checks if input is a non empty space string
-            self.string_checker(username)
+            username = self.string_checker(username)
             
             query = """
                     UPDATE `Users`
                     SET deleted = 1
-                    WHERE username = %s
+                    WHERE username = %s;
                     """
             self.cursor.execute(query, (username,))
             self.conn.commit()
@@ -300,16 +324,10 @@ class User_model:
 
         except mysql.connector.Error as err:
             logger.error(f"Database connection failed {err}.")
-            raise RuntimeError(f"Database connection failed {err}")
+            raise DatabaseConnectionError(f"Database connection failed {err}")
 
     def close_connection(self):
         self.cursor.close()
         self.conn.close()
         logger.info("Database connection closed.")
-
-#db_config = {
- #   'host': os.getenv('DB_HOST'),
-  #  'user': os.getenv('DB_USER'),
-   # 'password': os.getenv('DB_PASSWORD'),
-    #'database': os.getenv('DB_NAME')
-#}
+        
