@@ -1,7 +1,7 @@
 # Ignore the .env file
 env_files/
 logger/
-
+.gitignore
 # Ignore other common files and directories
 __pycache__/
 *.pyc

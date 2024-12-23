@@ -56,7 +56,7 @@ INSERT INTO `Songs` (album_id, artist_id, name, release_date, song_image) VALUES
 (5, 5, 'Love Again', '2020-03-27', NULL);
 
 -- Seed data for Playlists
-INSERT INTO `Playlists` (user_id, name, date_creation, playlist_image) VALUES
+INSERT INTO `Playlists` (creator_id, name, date_creation, playlist_image) VALUES
 (1, 'Johns favorites', '2022-01-15', NULL),
 (2, 'Janes chill mix', '2021-12-20', NULL),
 (3, 'Alices workout playlist', '2022-03-10', NULL),

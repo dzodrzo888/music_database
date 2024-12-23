@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS `Playlists_users`;
 DROP TABLE IF EXISTS `Likes`;
 DROP TABLE IF EXISTS `Followers_users`;
 DROP TABLE IF EXISTS `Artists_followers`;
@@ -61,11 +62,11 @@ CREATE TABLE `Songs` (
 -- PLAYLISTS
 CREATE TABLE `Playlists` (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    creator_id INT NOT NULL,
     name VARCHAR(50) NOT NULL,
     playlist_image BLOB,
     deleted TINYINT DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES Users(id)
+    FOREIGN KEY (creator_id) REFERENCES Users(id)
 );
 
 -- Playllist_track
@@ -108,6 +109,14 @@ CREATE TABLE `Likes` (
     PRIMARY KEY (user_id, song_id),
     FOREIGN KEY (user_id) REFERENCES Users(id),
     FOREIGN KEY (song_id) REFERENCES Songs(id)
+);
+
+CREATE TABLE `Playlists_users` (
+    user_id INT NOT NULL,
+    playlist_id INT NOT NULL,
+    PRIMARY KEY (user_id, playlist_id),
+    FOREIGN KEY (user_id) REFERENCES Users(id),
+    FOREIGN KEY (playlist_id) REFERENCES Playlists(id)
 );
 
 -- Trigger creation
@@ -184,9 +193,6 @@ DELIMITER ;
 -- Attempt to add the column
 ALTER TABLE Playlists
 ADD date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-
--- Views creation
 
 CREATE VIEW `non_deleted_users` AS
 SELECT * FROM `Users`
