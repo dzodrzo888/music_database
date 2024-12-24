@@ -243,4 +243,56 @@ INSERT INTO `Likes` (user_id, song_id, `order`) VALUES
 (2, 9, 1),
 (2, 10, 2);
 
--- For loop for deletion
+INSERT INTO `Subscription_plan_info` (plan_name, price, duration) VALUES
+('Individual Monthly Plan', 999, 30),  
+('Individual Quarterly Plan', 2499, 90),  
+('Individual Half-Yearly Plan', 4499, 180),  
+('Individual Annual Plan', 7999, 360), 
+('Duo Monthly Plan', 1499, 30),  
+('Duo Quarterly Plan', 3999, 90),  
+('Duo Half-Yearly Plan', 7499, 180),  
+('Duo Annual Plan', 13999, 360), 
+('Family Monthly Plan', 1999, 30), 
+('Family Quarterly Plan', 5499, 90), 
+('Family Half-Yearly Plan', 9999, 180),
+('Family Annual Plan', 18999, 360),
+('Student Monthly Plan', 499, 30),  
+('Student Quarterly Plan', 1299, 90),  
+('Student Half-Yearly Plan', 2499, 180),  
+('Student Annual Plan', 4799, 360);  
+
+INSERT INTO `User_payment_information` (user_id, credit_car_num, expiration_date, cvv) VALUES
+(1, '4111111111111111', '2025-12-31', '123'),
+(2, '4222222222222222', '2024-11-30', '456'),
+(3, '4333333333333333', '2023-10-31', '789'),
+(4, '4444444444444444', '2026-09-30', '012'),
+(5, '4555555555555555', '2025-08-31', '345'),
+(6, '4666666666666666', '2024-07-31', '678'),
+(7, '4777777777777777', '2023-06-30', '901'),
+(8, '4888888888888888', '2026-05-31', '234'),
+(9, '4999999999999999', '2025-04-30', '567'),
+(10, '4000000000000000', '2024-03-31', '890');
+
+INSERT INTO `Payments` (id, user_id, date, money_value) VALUES
+(1, 1, '2022-01-01 10:00:00', 999),
+(2, 2, '2022-02-01 11:00:00', 1999),
+(3, 3, '2022-03-01 12:00:00', 2999),
+(4, 4, '2022-04-01 13:00:00', 9999),
+(5, 5, '2022-05-01 14:00:00', 1299),
+(6, 6, '2022-06-01 15:00:00', 3499),
+(7, 7, '2022-07-01 16:00:00', 5999),
+(8, 8, '2022-08-01 17:00:00', 11999),
+(9, 9, '2022-09-01 18:00:00', 4999),
+(10, 10, '2022-10-01 19:00:00', 499);
+
+INSERT INTO `User_subscriptions` (user_id, subscription_plan_id, start_date) VALUES
+(1, 1, '2022-01-01 10:00:00'),
+(2, 2, '2022-02-01 11:00:00'),
+(3, 3, '2022-03-01 12:00:00'),
+(4, 4, '2022-04-01 13:00:00'),
+(5, 5, '2022-05-01 14:00:00'),
+(6, 6, '2022-06-01 15:00:00'),
+(7, 7, '2022-07-01 16:00:00'),
+(8, 8, '2022-08-01 17:00:00'),
+(9, 9, '2022-09-01 18:00:00'),
+(10, 10, '2022-10-01 19:00:00');

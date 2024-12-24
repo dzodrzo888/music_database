@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS `User_payment_information`;
+DROP TABLE IF EXISTS `User_subscriptions`;
 DROP TABLE IF EXISTS `Playlists_users`;
 DROP TABLE IF EXISTS `Likes`;
 DROP TABLE IF EXISTS `Followers_users`;
@@ -8,6 +10,8 @@ DROP TABLE IF EXISTS `Songs`;
 DROP TABLE IF EXISTS `Albums`;
 DROP TABLE IF EXISTS `Artists`;
 DROP TABLE IF EXISTS `Users`;
+DROP TABLE IF EXISTS `Payments`;
+DROP TABLE IF EXISTS `Subscription_plan_info`;
 DROP VIEW IF EXISTS `non_deleted_users`;
 DROP VIEW IF EXISTS `non_deleted_artists`;
 DROP VIEW IF EXISTS `non_deleted_albums`;
@@ -119,6 +123,38 @@ CREATE TABLE `Playlists_users` (
     FOREIGN KEY (playlists_id) REFERENCES Playlists(id)
 );
 
+CREATE TABLE `Subscription_plan_info` (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    plan_name VARCHAR(200) NOT NULL,
+    price MEDIUMINT UNSIGNED NOT NULL,
+    duration SMALLINT NOT NULL
+);
+
+CREATE TABLE `User_payment_information`(
+    user_id INT NOT NULL PRIMARY KEY,
+    credit_car_num VARCHAR(19) NOT NULL UNIQUE,
+    expiration_date DATETIME NOT NULL,
+    cvv VARCHAR(4) NOT NULL,
+    FOREIGN KEY(user_id) REFERENCES Users(id)
+);
+
+CREATE TABLE `Payments` (
+    id INT NOT NULL PRIMARY KEY,
+    user_id INT NOT NULL,
+    date DATETIME NOT NULL,
+    money_value MEDIUMINT NOT NULL
+);
+
+CREATE TABLE `User_subscriptions` (
+    user_id INT NOT NULL,
+    subscription_plan_id INT NOT NULL,
+    start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expiration_date DATETIME DEFAULT NULL,
+    PRIMARY KEY(user_id, subscription_plan_id),
+    FOREIGN KEY(user_id) REFERENCES Users(id),
+    FOREIGN KEY(subscription_plan_id) REFERENCES Subscription_plan_info(id)
+);
+
 -- Trigger creation
 
 DELIMITER //
@@ -188,11 +224,28 @@ BEGIN
 END;
 //
 
+CREATE TRIGGER expritaion_date_calc
+BEFORE INSERT ON `User_subscriptions`
+FOR EACH ROW
+BEGIN
+    DECLARE plan_duration INT;
+
+    SELECT duration INTO plan_duration
+    FROM Subscription_plan_info
+    WHERE id = NEW.subscription_plan_id;
+
+    SET NEW.expiration_date = DATE_ADD(NEW.start_date, INTERVAL plan_duration DAY);
+END;
+//
+
 DELIMITER ;
 
 -- Attempt to add the column
 ALTER TABLE Playlists
 ADD date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE Users
+ADD user_type VARCHAR(20) NOT NULL DEFAULT 'regular';
 
 -- Index creation
 CREATE INDEX artist_name ON Artists(name);
