@@ -194,23 +194,36 @@ DELIMITER ;
 ALTER TABLE Playlists
 ADD date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
+-- Index creation
+CREATE INDEX artist_name ON Artists(name);
+CREATE INDEX album_name ON Albums(name);
+CREATE INDEX song_name ON Songs(name);
+CREATE INDEX playlist_name ON Playlists(name);
+CREATE INDEX user_username ON Users(username);
+CREATE INDEX artist_genre ON Artists(genre);
+
+-- Create views
 CREATE VIEW `non_deleted_users` AS
 SELECT * FROM `Users`
-WHERE deleted = 0;
+WHERE deleted = 0
+WITH CHECK OPTION;
 
 CREATE VIEW `non_deleted_artists` AS 
 SELECT * FROM `Artists`
-WHERE deleted = 0;
+WHERE deleted = 0
+WITH CHECK OPTION;
 
 CREATE VIEW `non_deleted_albums` AS 
 SELECT * FROM `Albums`
-WHERE deleted = 0;
+WHERE deleted = 0
+WITH CHECK OPTION;
 
 CREATE VIEW `non_deleted_songs` AS
 SELECT * FROM `Songs`
-WHERE deleted = 0;
+WHERE deleted = 0
+WITH CHECK OPTION;
 
 CREATE VIEW `non_deleted_playlists` AS
 SELECT * FROM `Playlists`
-WHERE deleted = 0;
-
+WHERE deleted = 0
+WITH CHECK OPTION;

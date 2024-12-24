@@ -1,3 +1,4 @@
+-- Seed data for Users
 INSERT INTO `Users` (username, password, email, date_of_birth, profile_image) VALUES
 ('john_doe', 'password123', 'john@example.com', '1990-01-01', NULL),
 ('jane_smith', 'password456', 'jane@example.com', '1985-05-15', NULL),
@@ -13,7 +14,17 @@ INSERT INTO `Users` (username, password, email, date_of_birth, profile_image) VA
 ('jack_orange', 'password999', 'jack@example.com', '1993-10-10', NULL),
 ('kate_pink', 'password000', 'kate@example.com', '1991-11-11', NULL),
 ('leo_gray', 'passwordaaa', 'leo@example.com', '1986-12-12', NULL),
-('mia_brown', 'passwordbbb', 'mia@example.com', '1992-01-01', NULL);
+('mia_brown', 'passwordbbb', 'mia@example.com', '1992-01-01', NULL),
+('user1', 'password1', 'user1@example.com', '1990-01-01', NULL),
+('user2', 'password2', 'user2@example.com', '1985-05-15', NULL),
+('user3', 'password3', 'user3@example.com', '1992-07-20', NULL),
+('user4', 'password4', 'user4@example.com', '1988-03-22', NULL),
+('user5', 'password5', 'user5@example.com', '1991-06-14', NULL),
+('user6', 'password6', 'user6@example.com', '1983-09-10', NULL),
+('user7', 'password7', 'user7@example.com', '1995-12-05', NULL),
+('user8', 'password8', 'user8@example.com', '1987-11-11', NULL),
+('user9', 'password9', 'user9@example.com', '1994-04-18', NULL),
+('user10', 'password10', 'user10@example.com', '1990-07-07', NULL);
 
 -- Seed data for Artists
 INSERT INTO `Artists` (name, genre, profile_image) VALUES
@@ -21,7 +32,17 @@ INSERT INTO `Artists` (name, genre, profile_image) VALUES
 ('Taylor Swift', 'Pop', NULL),
 ('Miles Davis', 'Jazz', NULL),
 ('Billie Eilish', 'Pop', NULL),
-('Dua Lipa', 'Pop', NULL);
+('Dua Lipa', 'Pop', NULL),
+('Adele', 'Pop', NULL),
+('Ed Sheeran', 'Pop', NULL),
+('Drake', 'Hip-Hop', NULL),
+('Beyonce', 'R&B', NULL),
+('Bruno Mars', 'Pop', NULL),
+('Kanye West', 'Hip-Hop', NULL),
+('Rihanna', 'Pop', NULL),
+('Justin Bieber', 'Pop', NULL),
+('Katy Perry', 'Pop', NULL),
+('Lady Gaga', 'Pop', NULL);
 
 -- Seed data for Albums
 INSERT INTO `Albums` (artist_id, name, release_date, album_image) VALUES
@@ -29,7 +50,17 @@ INSERT INTO `Albums` (artist_id, name, release_date, album_image) VALUES
 (2, '1989', '2014-10-27', NULL),
 (3, 'Kind of Blue', '1959-08-17', NULL),
 (4, 'Happier Than Ever', '2021-07-30', NULL),
-(5, 'Future Nostalgia', '2020-03-27', NULL);
+(5, 'Future Nostalgia', '2020-03-27', NULL),
+(6, '25', '2015-11-20', NULL),
+(7, 'Divide', '2017-03-03', NULL),
+(8, 'Scorpion', '2018-06-29', NULL),
+(9, 'Lemonade', '2016-04-23', NULL),
+(10, '24K Magic', '2016-11-18', NULL),
+(11, 'The Life of Pablo', '2016-02-14', NULL),
+(12, 'Anti', '2016-01-28', NULL),
+(13, 'Purpose', '2015-11-13', NULL),
+(14, 'Witness', '2017-06-09', NULL),
+(15, 'Joanne', '2016-10-21', NULL);
 
 -- Seed data for Songs
 INSERT INTO `Songs` (album_id, artist_id, name, release_date, song_image) VALUES
@@ -53,7 +84,27 @@ INSERT INTO `Songs` (album_id, artist_id, name, release_date, song_image) VALUES
 (4, 4, 'Oxytocin', '2021-07-30', NULL),
 (5, 5, 'Physical', '2020-03-27', NULL),
 (5, 5, 'Hallucinate', '2020-03-27', NULL),
-(5, 5, 'Love Again', '2020-03-27', NULL);
+(5, 5, 'Love Again', '2020-03-27', NULL),
+(6, 6, 'Hello', '2015-11-20', NULL),
+(6, 6, 'Send My Love', '2015-11-20', NULL),
+(7, 7, 'Shape of You', '2017-03-03', NULL),
+(7, 7, 'Castle on the Hill', '2017-03-03', NULL),
+(8, 8, 'Gods Plan', '2018-06-29', NULL),
+(8, 8, 'In My Feelings', '2018-06-29', NULL),
+(9, 9, 'Formation', '2016-04-23', NULL),
+(9, 9, 'Sorry', '2016-04-23', NULL),
+(10, 10, '24K Magic', '2016-11-18', NULL),
+(10, 10, 'Thats What I Like', '2016-11-18', NULL),
+(11, 11, 'Famous', '2016-02-14', NULL),
+(11, 11, 'Ultralight Beam', '2016-02-14', NULL),
+(12, 12, 'Work', '2016-01-28', NULL),
+(12, 12, 'Needed Me', '2016-01-28', NULL),
+(13, 13, 'Sorry', '2015-11-13', NULL),
+(13, 13, 'Love Yourself', '2015-11-13', NULL),
+(14, 14, 'Chained to the Rhythm', '2017-06-09', NULL),
+(14, 14, 'Bon Appetit', '2017-06-09', NULL),
+(15, 15, 'Million Reasons', '2016-10-21', NULL),
+(15, 15, 'Perfect Illusion', '2016-10-21', NULL);
 
 -- Seed data for Playlists
 INSERT INTO `Playlists` (creator_id, name, date_creation, playlist_image) VALUES
@@ -71,7 +122,17 @@ INSERT INTO `Playlists` (creator_id, name, date_creation, playlist_image) VALUES
 (12, 'Jacks workout mix', '2021-07-19', NULL),
 (13, 'Kates favorites', '2022-07-10', NULL),
 (14, 'Leos jazz collection', '2021-06-25', NULL),
-(15, 'Mias pop hits', '2022-08-05', NULL);
+(15, 'Mias pop hits', '2022-08-05', NULL),
+(1, 'Johns favorites 2', '2022-02-15', NULL),
+(2, 'Janes chill mix 2', '2022-01-20', NULL),
+(3, 'Alices workout playlist 2', '2022-04-10', NULL),
+(4, 'Bobs rock collection 2', '2022-02-05', NULL),
+(5, 'Charlies jazz vibes 2', '2022-03-25', NULL),
+(6, 'Davids pop hits 2', '2022-01-30', NULL),
+(7, 'Eves party mix 2', '2022-05-18', NULL),
+(8, 'Franks workout tunes 2', '2022-02-12', NULL),
+(9, 'Graces chill playlist 2', '2022-06-22', NULL),
+(10, 'Hanks road trip 2', '2022-03-14', NULL);
 
 -- Seed data for Playlist_tracks
 INSERT INTO `Playlist_tracks` (playlists_id, song_id, `order`) VALUES
@@ -181,3 +242,5 @@ INSERT INTO `Likes` (user_id, song_id, `order`) VALUES
 (1, 8, 2),
 (2, 9, 1),
 (2, 10, 2);
+
+-- For loop for deletion
