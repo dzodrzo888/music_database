@@ -15,6 +15,8 @@ sys.path.append(str(base_path))
 
 from utils.errors import InputError
 from utils.errors import DatabaseConnectionError
+from backend.database_manager.database_manager import DatabaseManager
+
 
 # Setup a logger
 logging.basicConfig(
@@ -34,19 +36,18 @@ load_dotenv(dotenv_path=env_path)
 
 class Subscription_model:
 
-    def __init__(self, db_config):
+    def __init__(self, cursor):
         """
         Initialize the Payment_model class with database configuration.
 
         Args:
-            db_config (dict): A dictionary containing database connection details.
+            cursor (mysql.connector.cursor_cext.CMySQLCursorDict): The database cursor.
 
         Raises:
                 DatabaseConnectionError: If connection to the database fails
         """
         try:
-            self.conn = mysql.connector.connect(**db_config)
-            self.cursor = self.conn.cursor(dictionary=True)
+            self.cursor = cursor
             self.cursor.execute("SHOW COLUMNS FROM Subscription_plan_info;")
             self.table_columns = self.cursor.fetchall()
             self.table_columns_list = [col["Field"] for col in self.table_columns]
@@ -135,7 +136,6 @@ class Subscription_model:
                     """
             subscription_tuple = tuple(subscription_dict.values())
             self.cursor.execute(query, subscription_tuple)
-            self.conn.commit()
             logger.info(f"Subscription plan: {subscription_dict["plan_name"]} inserted")
         except mysql.connector.Error as err:
             logger.error(f"Error connecting to the database: {err}")
@@ -178,7 +178,6 @@ class Subscription_model:
                     """
             updated_info_tuple = (value, subscription)
             self.cursor.execute(query, updated_info_tuple)
-            self.conn.commit()
             logger.info(f"Subscription plan: {subscription} updated")
         except mysql.connector.Error as err:
             logger.error(f"Error connecting to the database: {err}")
@@ -269,7 +268,6 @@ class Subscription_model:
                     WHERE username = %s;
                     """
             self.cursor.execute(query, (subscription,))
-            self.conn.commit()
             logger.info(f"{subscription} has been successfully deleted")
 
         except mysql.connector.Error as err:

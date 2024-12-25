@@ -16,6 +16,7 @@ sys.path.append(str(base_path))
 
 from utils.errors import InputError
 from utils.errors import DatabaseConnectionError
+from backend.database_manager.database_manager import DatabaseManager
 
 # Setup a logger
 logging.basicConfig(
@@ -168,8 +169,7 @@ class User_model:
             user_data["password"] = self.hash_passwords(user_data["password"])
             user_data_tuple = tuple(user_data.values())
             self.cursor.execute(query, user_data_tuple)
-            self.conn.commit()
-            logger.info(f"User sucessfully registered!")
+            logger.info(f"Execution for User registration succesful!")
         except mysql.connector.Error as err:
             logger.error(f"Database connection failed {err}.")
             raise DatabaseConnectionError(f"Database connection failed {err}.")
@@ -259,8 +259,7 @@ class User_model:
                     WHERE username = %s;
                     """
             self.cursor.execute(query, (value, username))
-            self.conn.commit()
-            logger.info(f"{column_dict} has been updated to {value} for {username}")
+            logger.info(f"Execution for {column_dict} has been updated to {value} for {username}")
 
         except mysql.connector.Error as err:
             logger.error(f"Database connection failed {err}.")
@@ -319,15 +318,23 @@ class User_model:
                     WHERE username = %s;
                     """
             self.cursor.execute(query, (username,))
-            self.conn.commit()
-            logger.info(f"{username} has been successfully deleted")
+            logger.info(f"{username} deletion execution succesful")
 
         except mysql.connector.Error as err:
             logger.error(f"Database connection failed {err}.")
             raise DatabaseConnectionError(f"Database connection failed {err}")
 
-    def close_connection(self):
-        self.cursor.close()
-        self.conn.close()
-        logger.info("Database connection closed.")
-        
+if __name__ == "__main__":
+
+    db_config = {
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME')
+    }
+
+    db_manager = DatabaseManager(db_config=db_config)
+    user_mode = User_model(db_manager.get_cursor())
+    user_mode.soft_delete_user_account("john_doe")
+    db_manager.commit()
+    db_manager.close()

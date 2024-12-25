@@ -14,6 +14,7 @@ sys.path.append(str(base_path))
 
 from utils.errors import InputError
 from utils.errors import DatabaseConnectionError
+from backend.database_manager.database_manager import DatabaseManager
 
 # Setup a logger
 
@@ -34,19 +35,18 @@ load_dotenv(dotenv_path=env_path)
 
 class Playlist_model:
 
-    def __init__(self, db_config: dict):
+    def __init__(self, cursor):
         """
         Initialize the Playlist_model class with database configuration.
 
         Args:
-            db_config (dict): A dictionary containing database connection details.
+            cursor (mysql.connector.cursor_cext.CMySQLCursorDict): The database cursor.
 
         Raises:
                 DatabaseConnectionError: If connection to the database fails.
         """
         try:
-            self.conn = mysql.connector.connect(**db_config)
-            self.cursor = self.conn.cursor(dictionary=True)
+            self.cursor = cursor
             self.cursor.execute("SHOW COLUMNS FROM Playlists;")
             self.table_columns = self.cursor.fetchall()
             logger.info("Database connection established successfully.")
@@ -136,7 +136,6 @@ class Playlist_model:
                     """
             playlists_tuple = tuple(playlist_info.values())
             self.cursor.execute(query, playlists_tuple)
-            self.conn.commit()
             logger.info(f"New song added {playlist_info["name"]}")
         except mysql.connector.Error as err:
             logger.error(f"Error when createing a new song {err}")
@@ -164,7 +163,6 @@ class Playlist_model:
                     VALUES(%s, %s)
                     """
             self.cursor.execute(query, (playlist_id, id))
-            self.conn.commit()
             logger.info(f"New song added to the playlist {playlist_id}")
         except mysql.connector.Error as err:
             logger.error(f"Databse connection failed {err}")
@@ -192,7 +190,6 @@ class Playlist_model:
                     WHERE playlists_id = %s AND {type}_id = %s
                     """
             self.cursor.execute(query, (playlist_id, id))
-            self.conn.commit()
             logger.info(f"Song removed from the playlist {playlist_id}")
         except mysql.connector.Error as err:
             logger.error(f"Databse connection failed {err}")
@@ -301,7 +298,6 @@ class Playlist_model:
                     WHERE name = %s
                     """
             self.cursor.execute(query, (value, playlist_name))
-            self.conn.commit()
             logger.info(f"{playlist_name} info updated on {column_dict} to {value}")
         except mysql.connector.Error as err:
             logger.error(f"Error updating a song info {err}")
@@ -327,7 +323,6 @@ class Playlist_model:
                     WHERE name = %s
                     """
             self.cursor.execute(query, (playlist_name, ))
-            self.conn.commit()
             logger.info(f"{playlist_name} deleted")
         except mysql.connector.Error as err:
             logger.error(f"Error deleting a song {err}")

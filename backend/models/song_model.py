@@ -14,6 +14,8 @@ sys.path.append(str(base_path))
 
 from utils.errors import InputError
 from utils.errors import DatabaseConnectionError
+from backend.database_manager.database_manager import DatabaseManager
+
 
 # Setup a logger
 
@@ -34,19 +36,18 @@ load_dotenv(dotenv_path=env_path)
 
 class Song_model:
 
-    def __init__(self, db_config: dict):
+    def __init__(self, cursor):
         """
         Initialize the Song_model class with database configuration.
 
         Args:
-            db_config (dict): A dictionary containing database connection details.
+            cursor (mysql.connector.cursor_cext.CMySQLCursorDict): The database cursor.
 
         Raises:
                 DatabaseConnectionError: If connection to the database fails.
         """
         try:
-            self.conn = mysql.connector.connect(**db_config)
-            self.cursor = self.conn.cursor(dictionary=True)
+            self.cursor = cursor
             self.cursor.execute("SHOW COLUMNS FROM Songs;")
             self.table_columns = self.cursor.fetchall()
             logger.info("Database connection established successfully.")
@@ -137,7 +138,6 @@ class Song_model:
                     """
             song_info_tuple = tuple(song_info.values())
             self.cursor.execute(query, song_info_tuple)
-            self.conn.commit()
             logger.info(f"New song added {song_info["name"]}")
         except mysql.connector.Error as err:
             logger.error(f"Error when createing a new song {err}")
@@ -267,7 +267,6 @@ class Song_model:
                     WHERE name = %s
                     """
             self.cursor.execute(query, (value, song_name))
-            self.conn.commit()
             logger.info(f"{song_name} info updated on {column_dict} to {value}")
         except mysql.connector.Error as err:
             logger.error(f"Error updating a song info {err}")
@@ -293,7 +292,6 @@ class Song_model:
                     WHERE name = %s
                     """
             self.cursor.execute(query, (song_name, ))
-            self.conn.commit()
             logger.info(f"{song_name} deleted")
         except mysql.connector.Error as err:
             logger.error(f"Error deleting a song {err}")
@@ -307,9 +305,3 @@ class Song_model:
     def fetch_trending_songs(self):
         pass
 
-db_config = {
-    'host': os.getenv('DB_HOST'),
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'database': os.getenv('DB_NAME')
-}

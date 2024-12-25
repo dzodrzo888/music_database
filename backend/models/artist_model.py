@@ -14,6 +14,7 @@ sys.path.append(str(base_path))
 
 from utils.errors import InputError
 from utils.errors import DatabaseConnectionError
+from backend.database_manager.database_manager import DatabaseManager
 
 # Setup a logger
 
@@ -34,19 +35,18 @@ load_dotenv(dotenv_path=env_path)
 
 class Artists_model:
 
-    def __init__(self, db_config: dict):
+    def __init__(self, cursor):
         """
         Initialize the UserModel class with database configuration.
 
         Args:
-            db_config (dict): A dictionary containing database connection details.
+            cursor (mysql.connector.cursor_cext.CMySQLCursorDict): The database cursor.
 
         Raises:
                 DatabaseConnectionError: If connection to the database fails
         """
         try:
-            self.conn = mysql.connector.connect(**db_config)
-            self.cursor = self.conn.cursor(dictionary=True)
+            self.cursor = cursor
             self.cursor.execute("SHOW COLUMNS FROM Artists;")
             self.table_columns = self.cursor.fetchall()
             logger.info("Database connection established successfully.")
@@ -136,7 +136,6 @@ class Artists_model:
                     """
             artist_info_tuple = tuple(artist_info.values())
             self.cursor.execute(query, artist_info_tuple)
-            self.conn.commit()
             logger.info(f"New artist added {artist_info["name"]}")
         except mysql.connector.Error as err:
             logger.error(f"Error when createing a new artist {err}")
@@ -247,7 +246,6 @@ class Artists_model:
                     WHERE name = %s
                     """
             self.cursor.execute(query, (value, artist_name))
-            self.conn.commit()
             logger.info(f"{artist_name} info updated on {column_dict} to {value}")
         except mysql.connector.Error as err:
             logger.error(f"Error updating a artist info {err}")
@@ -273,7 +271,6 @@ class Artists_model:
                     WHERE name = %s
                     """
             self.cursor.execute(query, (artist_name, ))
-            self.conn.commit()
             logger.info(f"{artist_name} deleted")
         except mysql.connector.Error as err:
             logger.error(f"Error deleting a artist {err}")

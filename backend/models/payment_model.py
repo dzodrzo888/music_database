@@ -16,6 +16,8 @@ sys.path.append(str(base_path))
 
 from utils.errors import InputError
 from utils.errors import DatabaseConnectionError
+from backend.database_manager.database_manager import DatabaseManager
+
 
 # Setup a logger
 logging.basicConfig(
@@ -33,16 +35,9 @@ logger = logging.getLogger(__name__)
 logger.debug(f"Loading .env file from: {env_path}")
 load_dotenv(dotenv_path=env_path)
 
-db_config = {
-    'host': os.getenv('DB_HOST'),
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'database': os.getenv('DB_NAME')
-}
-
 class Payment_model:
 
-    def __init__(self, db_config):
+    def __init__(self, cursor, db_man):
         """
         Initialize the Payment_model class with database configuration.
 
@@ -53,8 +48,8 @@ class Payment_model:
                 DatabaseConnectionError: If connection to the database fails
         """
         try:
-            self.conn = mysql.connector.connect(**db_config)
-            self.cursor = self.conn.cursor(dictionary=True)
+            self.cursor = cursor
+            self.db_man = db_man
             self.cursor.execute("SHOW COLUMNS FROM User_subscriptions;")
             self.table_columns = self.cursor.fetchall()
             self.table_columns_list = [col["Field"] for col in self.table_columns]
@@ -223,7 +218,7 @@ class Payment_model:
         Args:
             username (str): Users username
         """
-        user_model = User_model(db_config=db_config)
+        user_model = User_model(self.cursor)
         user_model.update_user_details(updated_info={"user_type": "premium"}, username=username)
 
     def subscription_plan_purchase(self, subscription_info: dict):
@@ -231,20 +226,18 @@ class Payment_model:
         Using a transaction this function inserts user info into subscriptions, payments and updates user to be a preimum user.
 
         Args:
-            payment_info (dict): Dict containing info about the payment.
             subscription_info (dict): Dict containing info about the user and subscription he bought.
-            username (str): Users username.
 
         Raises:
             DatabaseConnectionError: If connection to the database fails
         """
         
         try:
-            if self.conn.in_transaction:
+            if db_manager.conn.in_transaction:
                 logger.warning("Transaction already in progress. Rolling back before starting a new one.")
-                self.conn.rollback()
+                db_manager.rollback()
 
-            self.conn.start_transaction()
+            db_manager.conn.start_transaction()
 
             # Insert subscription information
             self.insert_subscription(subscription_info)
@@ -260,7 +253,7 @@ class Payment_model:
             logger.info(f"User ID {subscription_info["user_id"]} purchased subscription plan ID {subscription_info["subscription_plan_id"]}")
 
         except mysql.connector.Error as err:
-            self.conn.rollback()
+            db_manager.rollback()
             logger.error(f"Error connecting to the database: {err}")
             raise DatabaseConnectionError(f"Error connecting to the database: {err}")
 
@@ -317,19 +310,26 @@ class Payment_model:
             logger.error(f"Error connecting to the database: {err}")
             raise DatabaseConnectionError(f"Error connecting to the database: {err}")
 
-    def close_connection(self):
-        self.cursor.close()
-        self.conn.close()
-        logger.info("Database connection closed.")
 
-subscription_info = {
-    "user_id": 1,
-    "subscription_plan_id": 1
-}
+if __name__ == "__main__":
 
+    subscription_info = {
+        "user_id": 2,
+        "subscription_plan_id": 2
+    }
 
+    db_config = {
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_NAME')
+    }
 
-payment_model = Payment_model(db_config=db_config)
+    db_manager = DatabaseManager(db_config=db_config)
 
-payment_model.subscription_plan_purchase(subscription_info)
+    payment_model = Payment_model(db_manager.get_cursor(), db_manager)
+
+    payment_model.subscription_plan_purchase(subscription_info)
+    db_manager.commit()
+    db_manager.close()
 

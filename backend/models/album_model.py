@@ -14,6 +14,8 @@ sys.path.append(str(base_path))
 
 from utils.errors import InputError
 from utils.errors import DatabaseConnectionError
+from backend.database_manager.database_manager import DatabaseManager
+
 
 # Setup a logger
 
@@ -34,19 +36,18 @@ load_dotenv(dotenv_path=env_path)
 
 class Albums_model:
 
-    def __init__(self, db_config: dict):
+    def __init__(self, cursor):
         """
         Initialize the Albums_model class with database configuration.
 
         Args:
-            db_config (dict): A dictionary containing database connection details.
+            cursor (mysql.connector.cursor_cext.CMySQLCursorDict): The database cursor.
 
         Raises:
                 DatabaseConnectionError: If connection to the database fails
         """
         try:
-            self.conn = mysql.connector.connect(**db_config)
-            self.cursor = self.conn.cursor(dictionary=True)
+            self.cursor = cursor
             self.cursor.execute("SHOW COLUMNS FROM Albums;")
             self.table_columns = self.cursor.fetchall()
             logger.info("Database connection established successfully.")
@@ -136,7 +137,6 @@ class Albums_model:
                     """
             album_info_tuple = tuple(album_info.values())
             self.cursor.execute(query, album_info_tuple)
-            self.conn.commit()
             logger.info(f"New album added {album_info["name"]}")
         except mysql.connector.Error as err:
             logger.error(f"Error when createing a new album {err}")
@@ -211,7 +211,6 @@ class Albums_model:
                     WHERE name = %s
                     """
             self.cursor.execute(query, (value, album_name))
-            self.conn.commit()
             logger.info(f"{album_name} info updated on {column_dict} to {value}")
         except mysql.connector.Error as err:
             logger.error(f"Error updating a album info {err}")
@@ -237,7 +236,6 @@ class Albums_model:
                     WHERE name = %s
                     """
             self.cursor.execute(query, (album_name, ))
-            self.conn.commit()
             logger.info(f"{album_name} deleted")
         except mysql.connector.Error as err:
             logger.error(f"Error deleting a album {err}")
@@ -278,20 +276,3 @@ class Albums_model:
         self.conn.close()
         logger.info("Database connection closed.")
 
-db_config = {
-    'host': os.getenv('DB_HOST'),
-    'user': os.getenv('DB_USER'),
-    'password': os.getenv('DB_PASSWORD'),
-    'database': os.getenv('DB_NAME')
-}
-
-album = {
-    "artist_id": 7,
-    "name": "Memoir of a Sparklemuffin",
-    "release_date": "2024-06-06",
-    "album_image": None
-}
-
-albums_model = Albums_model(db_config=db_config)
-
-print(albums_model.fetch_all_albums())
