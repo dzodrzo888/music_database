@@ -16,6 +16,7 @@ DROP VIEW IF EXISTS `non_deleted_artists`;
 DROP VIEW IF EXISTS `non_deleted_albums`;
 DROP VIEW IF EXISTS `non_deleted_songs`;
 DROP VIEW IF EXISTS `non_deleted_playlists`;
+DROP VIEW IF EXISTS `non_deleted_subscriptions`;
 -- USERS
 -- table mapping users.
 CREATE TABLE `Users`(
@@ -25,7 +26,6 @@ CREATE TABLE `Users`(
     email VARCHAR(50) NOT NULL,
     date_of_birth DATE NOT NULL,
     deleted TINYINT DEFAULT 0,
-    type VARCHAR(20) NOT NULL DEFAULT 'regular',
     profile_image BLOB
 );
 
@@ -132,7 +132,7 @@ CREATE TABLE `Subscription_plan_info` (
 );
 
 CREATE TABLE `Payments` (
-    id INT NOT NULL PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     money_value MEDIUMINT NOT NULL,
@@ -140,11 +140,11 @@ CREATE TABLE `Payments` (
 );
 
 CREATE TABLE `User_subscriptions` (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     subscription_plan_id INT NOT NULL,
     start_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expiration_date DATETIME DEFAULT NULL,
-    PRIMARY KEY(user_id, subscription_plan_id),
     FOREIGN KEY(user_id) REFERENCES Users(id),
     FOREIGN KEY(subscription_plan_id) REFERENCES Subscription_plan_info(id)
 );

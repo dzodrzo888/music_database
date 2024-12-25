@@ -1,3 +1,4 @@
+from pathlib import Path
 # Define paths
 base_path = Path(__file__).resolve().parent.parent.parent
 env_path = base_path / 'env_files' / 'special_detail.env'
@@ -7,7 +8,6 @@ log_file = log_dir / 'app.log'
 import mysql.connector
 import os
 from dotenv import load_dotenv
-from pathlib import Path
 import logging
 import bcrypt
 import sys
@@ -34,7 +34,7 @@ logger.debug(f"Loading .env file from: {env_path}")
 load_dotenv(dotenv_path=env_path)
 
 class User_model:
-    def __init__(self, db_config: dict):
+    def __init__(self, cursor):
         """
         Initialize the UserModel class with database configuration.
 
@@ -45,8 +45,7 @@ class User_model:
                 DatabaseConnectionError: If connection to the database fails
         """
         try:
-            self.conn = mysql.connector.connect(**db_config)
-            self.cursor = self.conn.cursor(dictionary=True)
+            self.cursor = cursor
             self.cursor.execute("SHOW COLUMNS FROM Users;")
             self.table_columns = self.cursor.fetchall()
             logger.info("Database connection established successfully.")
@@ -243,7 +242,6 @@ class User_model:
             column_table = [row["Field"] for row in self.table_columns]
 
             column_dict, value = next(iter(updated_info.items()))
-
             # Check if input is a string
             username = self.string_checker(username)
             
@@ -255,7 +253,6 @@ class User_model:
 
             if column_dict == "password":
                 value = self.hash_passwords(value)
-
             query = f"""
                     UPDATE `Users`
                     SET {column_dict} = %s
