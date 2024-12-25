@@ -23,7 +23,7 @@ CREATE TABLE `Users`(
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(100) NOT NULL,
-    email VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
     date_of_birth DATE NOT NULL,
     deleted TINYINT DEFAULT 0,
     profile_image BLOB
@@ -33,8 +33,8 @@ CREATE TABLE `Users`(
 -- table mapping artists.
 CREATE TABLE `Artists` (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL,
-    genre VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    genre VARCHAR(100) NOT NULL,
     deleted TINYINT DEFAULT 0,
     profile_image BLOB
 );
@@ -43,7 +43,7 @@ CREATE TABLE `Artists` (
 CREATE TABLE `Albums`(
     id INT AUTO_INCREMENT PRIMARY KEY,
     artist_id INT NOT NULL,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
     release_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     album_image BLOB,
     deleted TINYINT DEFAULT 0,
@@ -55,7 +55,7 @@ CREATE TABLE `Songs` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     album_id INT NOT NULL,
     artist_id INT NOT NULL,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
     release_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     song_image BLOB,
     deleted TINYINT DEFAULT 0,
@@ -67,7 +67,7 @@ CREATE TABLE `Songs` (
 CREATE TABLE `Playlists` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     creator_id INT NOT NULL,
-    name VARCHAR(50) NOT NULL,
+    name VARCHAR(200) NOT NULL,
     playlist_image BLOB,
     deleted TINYINT DEFAULT 0,
     FOREIGN KEY (creator_id) REFERENCES Users(id)

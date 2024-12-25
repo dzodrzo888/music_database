@@ -1,6 +1,9 @@
 # Ignore the .env file
 env_files/
 logger/
+data/
+data_scraper/
+seed_data.sql
 # Ignore other common files and directories
 __pycache__/
 *.pyc
