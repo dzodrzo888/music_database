@@ -80,7 +80,7 @@ class Albums_model:
             raise ValueError("Input must be a non empty string")
         
         string_stripped = string.strip()
-
+        
         return string_stripped
 
     def check_if_input_cols_match(self, table_columns: list, input_columns: list, exclude_columns = None, exact_match=True):

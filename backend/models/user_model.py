@@ -174,6 +174,9 @@ class User_model:
         except mysql.connector.Error as err:
             logger.error(f"Database connection failed {err}.")
             raise DatabaseConnectionError(f"Database connection failed {err}.")
+        except mysql.connector.DataError as err:
+            logger.error(f"Wrong data format: {err}")
+            raise InputError(f"Wrong data format: {err}")
 
     def authenticate_user(self, user_dict: dict) -> bool:
         """
@@ -296,7 +299,7 @@ class User_model:
             logger.error(f"Databse connection failed {err}")
             raise DatabaseConnectionError(f"Databse connection failed {err}")
     
-    def delete_user_account(self, username: str):
+    def soft_delete_user_account(self, username: str):
         """
         This function takes a users username as input and marks him as deleted in our database.
 

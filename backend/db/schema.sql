@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS `User_payment_information`;
+DROP TABLE IF EXISTS `Payments`;
 DROP TABLE IF EXISTS `User_subscriptions`;
 DROP TABLE IF EXISTS `Playlists_users`;
 DROP TABLE IF EXISTS `Likes`;
@@ -10,7 +10,6 @@ DROP TABLE IF EXISTS `Songs`;
 DROP TABLE IF EXISTS `Albums`;
 DROP TABLE IF EXISTS `Artists`;
 DROP TABLE IF EXISTS `Users`;
-DROP TABLE IF EXISTS `Payments`;
 DROP TABLE IF EXISTS `Subscription_plan_info`;
 DROP VIEW IF EXISTS `non_deleted_users`;
 DROP VIEW IF EXISTS `non_deleted_artists`;
@@ -26,6 +25,7 @@ CREATE TABLE `Users`(
     email VARCHAR(50) NOT NULL,
     date_of_birth DATE NOT NULL,
     deleted TINYINT DEFAULT 0,
+    type VARCHAR(20) NOT NULL DEFAULT 'regular',
     profile_image BLOB
 );
 
@@ -127,22 +127,16 @@ CREATE TABLE `Subscription_plan_info` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     plan_name VARCHAR(200) NOT NULL,
     price MEDIUMINT UNSIGNED NOT NULL,
-    duration SMALLINT NOT NULL
-);
-
-CREATE TABLE `User_payment_information`(
-    user_id INT NOT NULL PRIMARY KEY,
-    credit_car_num VARCHAR(19) NOT NULL UNIQUE,
-    expiration_date DATETIME NOT NULL,
-    cvv VARCHAR(4) NOT NULL,
-    FOREIGN KEY(user_id) REFERENCES Users(id)
+    duration SMALLINT NOT NULL,
+    deleted TINYINT(1) NOT NULL DEFAULT 0
 );
 
 CREATE TABLE `Payments` (
     id INT NOT NULL PRIMARY KEY,
     user_id INT NOT NULL,
-    date DATETIME NOT NULL,
-    money_value MEDIUMINT NOT NULL
+    date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    money_value MEDIUMINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(id)
 );
 
 CREATE TABLE `User_subscriptions` (
@@ -278,5 +272,10 @@ WITH CHECK OPTION;
 
 CREATE VIEW `non_deleted_playlists` AS
 SELECT * FROM `Playlists`
+WHERE deleted = 0
+WITH CHECK OPTION;
+
+CREATE VIEW `non_deleted_subscriptions` AS
+SELECT * FROM `Subscription_plan_info`
 WHERE deleted = 0
 WITH CHECK OPTION;
