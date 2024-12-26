@@ -11,6 +11,9 @@ from dotenv import load_dotenv
 import logging
 import sys
 from user_model import User_model
+import numpy as np
+seed_value = 42
+np.random.seed(seed_value)
 
 sys.path.append(str(base_path))
 
@@ -227,6 +230,10 @@ class Payment_model:
 
         Args:
             subscription_info (dict): Dict containing info about the user and subscription he bought.
+                Exammple: {
+                "user_id": 1,
+                "subscription_plan_id": 1
+                }
 
         Raises:
             DatabaseConnectionError: If connection to the database fails
@@ -313,11 +320,6 @@ class Payment_model:
 
 if __name__ == "__main__":
 
-    subscription_info = {
-        "user_id": 2,
-        "subscription_plan_id": 2
-    }
-
     db_config = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -329,7 +331,14 @@ if __name__ == "__main__":
 
     payment_model = Payment_model(db_manager.get_cursor(), db_manager)
 
-    payment_model.subscription_plan_purchase(subscription_info)
-    db_manager.commit()
-    db_manager.close()
-
+    #random_user_id = np.random.randint(low=1, high=46, size=20)
+    #random_subscription_id = np.random.randint(low=1, high=15, size=20)
+    
+    #for i in range(len(random_user_id)):
+     #   subscription_info = {
+      #      "user_id": random_user_id[i].item(),
+       #     "subscription_plan_id": random_subscription_id[i].item()
+        #}
+        #payment_model.subscription_plan_purchase(subscription_info)
+        #db_manager.commit()
+    #db_manager.close()
