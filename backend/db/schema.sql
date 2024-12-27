@@ -149,6 +149,55 @@ CREATE TABLE `User_subscriptions` (
     FOREIGN KEY(subscription_plan_id) REFERENCES Subscription_plan_info(id)
 );
 
+-- Attempt to add the column
+ALTER TABLE Playlists
+ADD date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD date_deletion DATETIME DEFAULT NULL;
+
+ALTER TABLE Users
+ADD user_type VARCHAR(20) NOT NULL DEFAULT 'regular',
+ADD date_registration DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD date_deletion DATETIME DEFAULT NULL;
+
+ALTER TABLE Artists
+ADD date_registration DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD date_deletion DATETIME DEFAULT NULL;
+
+ALTER TABLE Albums
+ADD date_deletion DATETIME DEFAULT NULL;
+
+ALTER TABLE Songs
+ADD date_deletion DATETIME DEFAULT NULL;
+
+ALTER TABLE Payments
+ADD subscription_plan_id INT NOT NULL;
+
+ALTER TABLE Payments
+ADD CONSTRAINT fk_subscription_plan
+FOREIGN KEY (subscription_plan_id) REFERENCES Subscription_plan_info(id);
+
+-- For the action column 0=added, 1=deleted
+ALTER TABLE Playlists_users
+ADD date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD action TINYINT(1) NOT NULL DEFAULT 0;
+
+ALTER TABLE Likes
+ADD date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD action TINYINT(1) NOT NULL DEFAULT 0;
+
+ALTER TABLE Followers_users
+ADD date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD action TINYINT(1) NOT NULL DEFAULT 0;
+
+ALTER TABLE Artists_followers
+ADD date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD action TINYINT(1) NOT NULL DEFAULT 0;
+
+ALTER TABLE Playlist_tracks
+ADD date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD action TINYINT(1) NOT NULL DEFAULT 0;
+
+
 -- Trigger creation
 
 DELIMITER //
@@ -164,6 +213,9 @@ BEGIN
         WHERE user_id = OLD.id;
         DELETE FROM `Likes`
         WHERE user_id = OLD.id;
+        UPDATE `Users`
+        SET date_deletion = CURRENT_TIMESTAMP
+        WHERE id = OLD.id;
     END IF;
 END;
 //
@@ -178,6 +230,9 @@ BEGIN
         WHERE artist_id = OLD.id;
         DELETE FROM `Artists_followers`
         WHERE artist_id = OLD.id;
+        UPDATE `Artists`
+        SET date_deletion = CURRENT_TIMESTAMP
+        WHERE id = OLD.id;
     END IF;
 END;
 //
@@ -190,6 +245,9 @@ BEGIN
         UPDATE `Songs`
         SET deleted = 1
         WHERE album_id = OLD.id;
+        UPDATE `Albums`
+        SET date_deletion = CURRENT_TIMESTAMP
+        WHERE id = OLD.id;
     END IF;
 END;
 //
@@ -203,6 +261,9 @@ BEGIN
         WHERE song_id = OLD.id;
         DELETE FROM `Playlist_tracks`
         WHERE song_id = OLD.id;
+        UPDATE `Songs`
+        SET date_deletion = CURRENT_TIMESTAMP
+        WHERE id = OLD.id;
     END IF;
 END;
 //
@@ -214,6 +275,9 @@ BEGIN
     IF NEW.deleted = 1 AND OLD.deleted = 0 THEN
         DELETE FROM `Playlists_tracks`
         WHERE playlists_id = OLD.id;
+        UPDATE `Playlists`
+        SET date_deletion = CURRENT_TIMESTAMP
+        WHERE id = OLD.id;
     END IF;
 END;
 //
@@ -233,13 +297,6 @@ END;
 //
 
 DELIMITER ;
-
--- Attempt to add the column
-ALTER TABLE Playlists
-ADD date_creation DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-ALTER TABLE Users
-ADD user_type VARCHAR(20) NOT NULL DEFAULT 'regular';
 
 -- Index creation
 CREATE INDEX artist_name ON Artists(name);

@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import logging
 import bcrypt
 import sys
+from faker import Faker
 
 sys.path.append(str(base_path))
 
@@ -151,10 +152,14 @@ class User_model:
             InputError: If the set of columns does not equal the columns from the table.
             DatabaseConnectionError: If the database connection fails.
         """
+    
         try:
             columns_table = [row["Field"] for row in self.table_columns]
             columns_dict = [col for col in user_data.keys()]
-            excluded_cols = ["id", "deleted"]
+            excluded_cols = ["id", "deleted", "user_type", "date_registration", "date_deletion"]
+
+            print(columns_table)
+            print(columns_dict)
 
             # Check if the table columns match the input columns
             self.check_if_input_cols_match(table_columns=columns_table, input_columns=columns_dict, exclude_columns=excluded_cols)
@@ -326,6 +331,28 @@ class User_model:
 
 if __name__ == "__main__":
 
+    fake = Faker()
+    
+    def generate_user():
+        username = fake.user_name()
+        password = fake.password()
+        email = fake.email()
+        date_of_birth = fake.date_of_birth(minimum_age=18, maximum_age=80).strftime('%Y-%m-%d')
+        profile_image = None
+        user_dict = {
+            "username": username,
+            "password": password,
+            "email": email,
+            "date_of_birth": date_of_birth,
+            "profile_image": profile_image,
+        }
+        print(user_dict)
+        return user_dict
+    
+    #num_users = 40
+
+    #users = [generate_user() for _ in range(num_users)]
+
     db_config = {
     'host': os.getenv('DB_HOST'),
     'user': os.getenv('DB_USER'),
@@ -333,8 +360,9 @@ if __name__ == "__main__":
     'database': os.getenv('DB_NAME')
     }
 
-    db_manager = DatabaseManager(db_config=db_config)
-    user_mode = User_model(db_manager.get_cursor())
-    user_mode.soft_delete_user_account("john_doe")
-    db_manager.commit()
-    db_manager.close()
+    #db_manager = DatabaseManager(db_config=db_config)
+    #user_mode = User_model(db_manager.get_cursor())
+    
+    #for i in users:
+     #   user_mode.register_user(i)
+#    db_manager.close()

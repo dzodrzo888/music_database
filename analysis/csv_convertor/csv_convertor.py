@@ -21,9 +21,11 @@ cursor = conn.cursor()
 cursor.execute("SHOW TABLES")
 tables = cursor.fetchall()
 table_names = tables[:13]
+base_path = "/home/jirka/Documents/spotify/project/spotify/analysis/analysis/data"
 
 for table in table_names:
 
     df = pd.read_sql_query(f"SELECT * FROM {table[0]}", con=conn)
     print(table[0])
-    df.to_csv(f"{table[0]}_data.csv", index=False)
+    file_path = os.path.join(base_path, f"{table[0]}_data.csv")
+    df.to_csv(file_path, index=False)
