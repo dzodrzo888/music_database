@@ -2,7 +2,6 @@
 env_files/
 logger/
 data/
-seed_data.sql
 # Ignore other common files and directories
 __pycache__/
 *.pyc

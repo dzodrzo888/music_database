@@ -1,0 +1,14 @@
+CREATE TABLE `Tracks`(
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    mbid VARCHAR(100) NOT NULL,
+    name VARCHAR(300) NOT NULL,
+    artist_name VARCHAR(300) NOT NULL,
+    genre VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE `Track_info` (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    mbid VARCHAR(100) NOT NULL,
+    low_level JSON NOT NULL,
+    high_level JSON NOT NULL
+);

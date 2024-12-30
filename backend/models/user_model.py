@@ -158,9 +158,6 @@ class User_model:
             columns_dict = [col for col in user_data.keys()]
             excluded_cols = ["id", "deleted", "user_type", "date_registration", "date_deletion"]
 
-            print(columns_table)
-            print(columns_dict)
-
             # Check if the table columns match the input columns
             self.check_if_input_cols_match(table_columns=columns_table, input_columns=columns_dict, exclude_columns=excluded_cols)
 

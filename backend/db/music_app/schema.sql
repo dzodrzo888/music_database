@@ -18,7 +18,6 @@ DROP VIEW IF EXISTS `non_deleted_songs`;
 DROP VIEW IF EXISTS `non_deleted_playlists`;
 DROP VIEW IF EXISTS `non_deleted_subscriptions`;
 -- USERS
--- table mapping users.
 CREATE TABLE `Users`(
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
@@ -30,7 +29,6 @@ CREATE TABLE `Users`(
 );
 
 -- ARTIST
--- table mapping artists.
 CREATE TABLE `Artists` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
